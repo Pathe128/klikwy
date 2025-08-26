@@ -1,0 +1,270 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  bio           String?
+  skills        String?   // JSON string for skills array
+  role          UserRole  @default(CLIENT)
+  isFreelancer  Boolean   @default(false)
+  phone         String?
+  location      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  services      Service[]
+  orders        Order[]   @relation("ClientOrders")
+  freelanceOrders Order[] @relation("FreelancerOrders")
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  projects      Project[]
+  reviews       Review[]  @relation("ReviewAuthor")
+  receivedReviews Review[] @relation("ReviewTarget")
+  payments      Payment[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Service {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  currency    String        @default("MAD")
+  category    ServiceCategory
+  deliveryTime Int          // in days
+  image       String?
+  isActive    Boolean       @default(true)
+  tags        String?       // JSON string for tags array
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relations
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  reviews     Review[]
+
+  @@map("services")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  title         String
+  description   String
+  budget        Float
+  currency      String      @default("MAD")
+  deadline      DateTime?
+  status        OrderStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  completedAt   DateTime?
+  deliverables  String?     // JSON string for file paths
+  
+  // Relations
+  clientId      String
+  client        User        @relation("ClientOrders", fields: [clientId], references: [id])
+  freelancerId  String?
+  freelancer    User?       @relation("FreelancerOrders", fields: [freelancerId], references: [id])
+  serviceId     String?
+  service       Service?    @relation(fields: [serviceId], references: [id])
+  messages      Message[]
+  payments      Payment[]
+  reviews       Review[]
+
+  @@map("orders")
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  budget      Float
+  currency    String    @default("MAD")
+  deadline    DateTime?
+  status      ProjectStatus @default(OPEN)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  clientId    String
+  client      User      @relation(fields: [clientId], references: [id])
+
+  @@map("projects")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+  
+  // Relations
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+  
+  // Relations
+  authorId  String
+  author    User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetId  String
+  target    User     @relation("ReviewTarget", fields: [targetId], references: [id])
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id])
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+
+  @@map("reviews")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Float
+  currency      String        @default("MAD")
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String?
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      NotificationType
+  createdAt DateTime @default(now())
+  
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+enum UserRole {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum ServiceCategory {
+  REDACTION
+  TRADUCTION
+  DESIGN_GRAPHIQUE
+  LOGO_BRANDING
+  POSTS_RESEAUX_SOCIAUX
+  DEVELOPPEMENT_WEB
+  RETOUCHE_PHOTO
+  MONTAGE_VIDEO
+  MARKETING_DIGITAL
+  AUTRES
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum ProjectStatus {
+  OPEN
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  ORDER_UPDATE
+  MESSAGE
+  PAYMENT
+  REVIEW
+  SYSTEM
+}

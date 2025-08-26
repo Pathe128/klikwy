@@ -2,7 +2,11 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1e3a8a;
+  --klikwy-blue: #1e3a8a;
+  --klikwy-pink: #ec4899;
+  --klikwy-blue-light: #3b82f6;
+  --klikwy-pink-light: #f472b6;
 }
 
 @theme inline {
@@ -10,17 +14,31 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  /* Klikwy brand colors */
+  --color-primary: var(--klikwy-blue);
+  --color-secondary: var(--klikwy-pink);
+  --color-accent: var(--klikwy-blue-light);
+  --color-muted: #64748b;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: var(--klikwy-blue);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--foreground);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom gradient backgrounds */
+.gradient-hero {
+  background: linear-gradient(135deg, var(--klikwy-blue) 0%, var(--klikwy-pink) 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
 }
