@@ -75,7 +75,7 @@ export default function Header() {
               <Link href="/services" className="text-[#0D3B66] hover:text-[#F72585] font-medium transition-colors whitespace-nowrap">
                 Services
               </Link>
-              <Link href="/become-seller" className="text-[#0D3B66] hover:text-[#F72585] font-medium transition-colors whitespace-nowrap">
+              <Link href="/features/devenir-freelance" className="text-[#0D3B66] hover:text-[#F72585] font-medium transition-colors whitespace-nowrap">
                 Devenir freelance
               </Link>
             </nav>
@@ -96,21 +96,33 @@ export default function Header() {
                 </Link>
               </div>
             ) : (
-              <div className="flex items-center gap-3 relative">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Bell className="w-5 h-5 text-[#0D3B66] hover:text-[#F72585]" />
-                </button>
-
-                {session.user?.image && (
-                  <Image
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
-                    width={36}
-                    height={36}
-                    className="rounded-full cursor-pointer border-2 border-gray-200 hover:border-[#F72585] transition-colors"
+              <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-2">
+                  <button 
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                  />
-                )}
+                    className="flex items-center gap-2 hover:bg-gray-100 rounded-full p-1 transition-colors"
+                  >
+                    {session.user?.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name || 'Profil'}
+                        width={36}
+                        height={36}
+                        className="rounded-full w-9 h-9 object-cover"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-600" />
+                      </div>
+                    )}
+                    <span className="hidden md:inline text-sm font-medium text-gray-700">
+                      {session.user?.name?.split(' ')[0] || 'Mon compte'}
+                    </span>
+                  </button>
+                  <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <Bell className="w-5 h-5 text-[#0D3B66] hover:text-[#F72585]" />
+                  </button>
+                </div>
 
                 <button onClick={() => setShowUserMenu(!showUserMenu)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                   {showUserMenu ? <X size={20} className="text-[#0D3B66]" /> : <Menu size={20} className="text-[#0D3B66]" />}
@@ -123,23 +135,23 @@ export default function Header() {
                       <p className="text-sm text-gray-500">{session.user?.email}</p>
                     </div>
                     
-                    <Link href="/profile" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/account/profile" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
                       <User size={16} /><span>Profil</span>
                     </Link>
 
-                    <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/account/dashboard" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
                       <LayoutDashboard size={16} /><span>Tableau de bord</span>
                     </Link>
 
-                    <Link href="/publish-project" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/account/projects/new" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
                       <Briefcase size={16} /><span>Publier un brief projet</span>
                     </Link>
 
-                    <Link href="/settings" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/account/settings" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
                       <Settings size={16} /><span>Paramètres du compte</span>
                     </Link>
 
-                    <Link href="/billing" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/account/billing" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 hover:text-[#F72585] transition-colors text-[#0D3B66]" onClick={() => setShowUserMenu(false)}>
                       <CreditCard size={16} /><span>Facturation et paiement</span>
                     </Link>
 

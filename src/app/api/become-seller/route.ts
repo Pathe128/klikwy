@@ -14,9 +14,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { bio, skills, experience, portfolio, hourlyRate, availability } = body
 
-    if (!bio || !skills || !experience || !hourlyRate) {
+    if (!bio || !skills || !hourlyRate) {
       return NextResponse.json(
         { error: 'Tous les champs requis doivent être remplis' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si l'utilisateur existe déjà comme vendeur
+    const existingSeller = await prisma.user.findUnique({
+      where: { id: session.user.id, isFreelancer: true }
+    })
+
+    if (existingSeller) {
+      return NextResponse.json(
+        { error: 'Vous êtes déjà enregistré en tant que vendeur' },
         { status: 400 }
       )
     }
@@ -26,14 +38,33 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       data: {
         bio,
-        skills: JSON.stringify(skills),
+        skills: Array.isArray(skills) ? JSON.stringify(skills) : JSON.stringify([skills]),
+        experience: experience || 'Débutant',
+        portfolio: portfolio || '',
+        hourlyRate: parseFloat(hourlyRate) || 0,
+        availability: availability || 'FULL_TIME',
         isFreelancer: true,
-        role: 'FREELANCER'
+        role: 'FREELANCER',
+        updatedAt: new Date()
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isFreelancer: true,
+        bio: true,
+        skills: true,
+        experience: true,
+        portfolio: true,
+        hourlyRate: true,
+        availability: true
       }
     })
 
     return NextResponse.json({ 
-      message: 'Statut vendeur activé avec succès',
+      success: true,
+      message: 'Votre profil vendeur a été créé avec succès',
       user: updatedUser 
     }, { status: 200 })
   } catch (error) {

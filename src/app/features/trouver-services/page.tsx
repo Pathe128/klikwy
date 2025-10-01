@@ -6,6 +6,16 @@ import { useEffect, useState } from "react"
 import { Search, Filter, Star, MapPin, Clock, Euro } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+interface SessionWithUserType {
+  user?: {
+    id: string
+    name?: string | null
+    email?: string | null
+    image?: string | null
+    userType?: string
+  }
+}
+
 interface Service {
   id: string
   title: string
@@ -52,7 +62,7 @@ const mockServices: Service[] = [
 ]
 
 export default function TrouverServicesPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSession() as { data: SessionWithUserType | null, status: string }
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -67,8 +77,8 @@ export default function TrouverServicesPage() {
     }
 
     // Vérifier si l'utilisateur est bien un client
-    if (session.user?.userType === "freelancer") {
-      router.push("/vendre-services")
+    if (session?.user?.userType === "freelancer") {
+      router.push("/features/devenir-freelance")
       return
     }
   }, [session, status, router])

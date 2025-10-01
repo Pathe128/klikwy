@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Search, Star, Users, Zap, ArrowRight, CheckCircle } from "lucide-react"
 import ServicesSection from "@/components/ServicesSection"
+import RecentProjects from "@/components/RecentProjects"
 
 export default function Home() {
   return (
@@ -34,7 +35,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              href="/become-seller"
+              href="/features/devenir-freelance"
               className="bg-[#F72585] hover:bg-white hover:text-[#0D3B66] text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200 flex items-center gap-2"
             >
               Devenir freelance <ArrowRight size={20} />
@@ -74,6 +75,9 @@ export default function Home() {
 
       {/* Services dynamiques */}
       <ServicesSection />
+
+      {/* Projets récents */}
+      <RecentProjects />
 
       {/* Comment ça marche */}
       <section className="py-20 bg-gray-50 px-4">
@@ -137,7 +141,7 @@ export default function Home() {
               S'inscrire gratuitement <ArrowRight size={20} />
             </Link>
             <Link
-              href="/become-seller"
+              href="/features/devenir-freelance"
               className="bg-[#F72585] hover:bg-white hover:text-[#0D3B66] text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200"
             >
               Devenir freelance

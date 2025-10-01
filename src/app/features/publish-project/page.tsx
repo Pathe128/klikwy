@@ -45,6 +45,13 @@ export default function PublishProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validation des champs requis
+    if (!formData.title || !formData.description || !formData.budget) {
+      alert('Veuillez remplir tous les champs obligatoires')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -54,19 +61,35 @@ export default function PublishProjectPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          ...formData,
+          title: formData.title,
+          description: formData.description,
           budget: parseFloat(formData.budget),
-          deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null
+          deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+          category: formData.category || 'AUTRES'
         })
       })
 
-      if (response.ok) {
-        router.push('/dashboard?tab=projects')
-      } else {
-        console.error('Erreur lors de la publication du projet')
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la publication du projet')
       }
+      
+      // Réinitialisation du formulaire
+      setFormData({
+        title: '',
+        description: '',
+        budget: '',
+        deadline: '',
+        category: ''
+      })
+      
+      // Redirection vers le tableau de bord avec un message de succès
+      router.push('/dashboard?tab=projects&success=project_created')
+      
     } catch (error) {
-      console.error('Erreur:', error)
+      console.error('Erreur lors de la publication du projet:', error)
+      alert(`Erreur: ${error instanceof Error ? error.message : 'Une erreur est survenue'}`)
     } finally {
       setIsLoading(false)
     }

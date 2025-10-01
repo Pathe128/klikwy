@@ -48,31 +48,43 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       const response = await fetch('/api/profile')
-      if (response.ok) {
-        const data = await response.json()
-        setProfile(data)
-        setFormData({
-          name: data.name || '',
-          bio: data.bio || '',
-          skills: data.skills ? JSON.parse(data.skills).join(', ') : '',
-          phone: data.phone || '',
-          location: data.location || ''
-        })
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement du profil')
       }
+      
+      // Mettre à jour le profil avec les données formatées
+      setProfile({
+        ...data.data,
+        skills: Array.isArray(data.data.skills) ? data.data.skills.join(', ') : ''
+      })
+      
+      // Mettre à jour le formulaire avec les données de l'utilisateur
+      setFormData({
+        name: data.data.name || '',
+        bio: data.data.bio || '',
+        skills: Array.isArray(data.data.skills) ? data.data.skills.join(', ') : '',
+        phone: data.data.phone || '',
+        location: data.data.location || ''
+      })
     } catch (error) {
       console.error('Erreur lors du chargement du profil:', error)
+      alert(error instanceof Error ? error.message : 'Une erreur est survenue')
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      const skillsArray = formData.skills 
-        ? formData.skills.split(',').map(skill => skill.trim()).filter(skill => skill)
-        : []
+    if (!formData.name) {
+      alert('Le nom est obligatoire')
+      return
+    }
 
+    setIsSaving(true)
+    
+    try {
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: {
@@ -80,17 +92,34 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           ...formData,
-          skills: JSON.stringify(skillsArray)
+          // Convertir la chaîne de compétences en tableau
+          skills: formData.skills
+            ? formData.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : []
         })
       })
 
-      if (response.ok) {
-        const updatedProfile = await response.json()
-        setProfile(updatedProfile)
-        setIsEditing(false)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la sauvegarde')
       }
+
+      // Mettre à jour le profil avec les nouvelles données
+      setProfile({
+        ...data.data,
+        skills: data.data.skills.join(', ')
+      })
+      
+      // Désactiver le mode édition
+      setIsEditing(false)
+      
+      // Afficher un message de succès
+      alert('Profil mis à jour avec succès')
+      
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
+      alert(error instanceof Error ? error.message : 'Une erreur est survenue')
     } finally {
       setIsSaving(false)
     }

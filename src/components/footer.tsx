@@ -51,7 +51,7 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold mb-4 text-lg text-gray-800">Liens utiles</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/become-seller" className="hover:text-[#9333EA]">Devenir freelance</Link></li>
+            <li><Link href="/features/devenir-freelance" className="hover:text-[#9333EA]">Devenir freelance</Link></li>
             <li><Link href="/how-it-works" className="hover:text-[#9333EA]">Comment ça marche</Link></li>
             <li><Link href="/help" className="hover:text-[#9333EA]">Centre d’aide</Link></li>
             <li><Link href="/contact" className="hover:text-[#9333EA]">Nous contacter</Link></li>

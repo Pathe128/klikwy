@@ -6,27 +6,23 @@ export default withAuth(
     const token = req.nextauth.token
     const { pathname } = req.nextUrl
 
-    // Redirect authenticated users to appropriate service pages
-    if (token && (pathname === "/auth/login" || pathname === "/auth/register" || pathname === "/")) {
-      const userType = token.userType
-      
-      if (userType === "client") {
-        return NextResponse.redirect(new URL("/trouver-services", req.url))
-      } else if (userType === "freelancer") {
-        return NextResponse.redirect(new URL("/vendre-services", req.url))
-      }
+    // Rediriger les utilisateurs connectés de la page de connexion/inscription vers la page d'accueil
+    if (token && (pathname === "/auth/login" || pathname === "/auth/register")) {
+      return NextResponse.redirect(new URL("/", req.url))
     }
 
-    // Protect service pages - redirect to appropriate page based on user type
+    // Protection des pages en fonction du type d'utilisateur
     if (token) {
       const userType = token.userType
       
-      if (pathname === "/trouver-services" && userType === "freelancer") {
-        return NextResponse.redirect(new URL("/vendre-services", req.url))
+      // Rediriger les freelancers qui essaient d'accéder à la page client
+      if (pathname.startsWith("/features/trouver-services") && userType === "freelancer") {
+        return NextResponse.redirect(new URL("/features/devenir-freelance", req.url))
       }
       
-      if (pathname === "/vendre-services" && userType === "client") {
-        return NextResponse.redirect(new URL("/trouver-services", req.url))
+      // Rediriger les clients qui essaient d'accéder à la page freelance
+      if (pathname.startsWith("/features/devenir-freelance") && userType === "client") {
+        return NextResponse.redirect(new URL("/features/trouver-services", req.url))
       }
     }
 
@@ -48,7 +44,7 @@ export default withAuth(
         }
         
         // Require authentication for service pages
-        if (pathname.startsWith("/trouver-services") || pathname.startsWith("/vendre-services")) {
+        if (pathname.startsWith("/features/trouver-services") || pathname.startsWith("/features/devenir-freelance")) {
           return !!token
         }
         
@@ -62,7 +58,7 @@ export const config = {
   matcher: [
     "/",
     "/auth/:path*",
-    "/trouver-services/:path*",
-    "/vendre-services/:path*"
+    "/features/trouver-services/:path*",
+    "/features/devenir-freelance/:path*"
   ]
 }
