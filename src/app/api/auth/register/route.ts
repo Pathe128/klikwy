@@ -1,59 +1,74 @@
-import { NextRequest, NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { userStore } from "@/lib/userStore"
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { name, email, password, userType } = await request.json()
+    const { name, email, password, userType } = await request.json();
+
+    console.log("📝 Données reçues:", { name, email, userType });
 
     // Validation des données
-    if (!name || !email || !password || !userType) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "Tous les champs sont requis" },
+        { message: "Tous les champs sont obligatoires" },
         { status: 400 }
-      )
+      );
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    if (userStore.userExists(email)) {
+    // Vérifier si l'utilisateur existe déjà dans la VRAIE base de données
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      console.log("❌ Utilisateur existe déjà:", email);
       return NextResponse.json(
         { message: "Un compte avec cet email existe déjà" },
         { status: 400 }
-      )
+      );
     }
 
     // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12)
+    console.log("🔐 Hachage du mot de passe...");
+    const hashedPassword = await bcrypt.hash(password, 12);
+    console.log("✅ Mot de passe hashé:", hashedPassword);
 
-    // Créer l'utilisateur
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password: hashedPassword,
-      userType,
-      createdAt: new Date().toISOString(),
-      emailVerified: false
-    }
+    // Déterminer le rôle
+    const role = userType === "freelancer" ? "FREELANCER" : "CLIENT";
+    const isFreelancer = userType === "freelancer";
 
-    userStore.addUser(newUser)
+    // Créer l'utilisateur dans la VRAIE base de données
+    console.log("👤 Création de l'utilisateur dans Prisma...");
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        hashedPassword,  // ✅ CORRECT
+        role,
+        isFreelancer,
+      },
+    });
 
-    // Retourner l'utilisateur sans le mot de passe
-    const { password: _, ...userWithoutPassword } = newUser
-    
+    console.log("✅ Utilisateur créé dans la base de données:", user.id);
+
     return NextResponse.json(
       { 
-        message: "Compte créé avec succès",
-        user: userWithoutPassword 
+        message: "Utilisateur créé avec succès", 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name,
+          role: user.role 
+        } 
       },
       { status: 201 }
-    )
-
+    );
   } catch (error) {
-    console.error("Erreur lors de l'inscription:", error)
+    console.error("❌ Erreur d'inscription:", error);
     return NextResponse.json(
-      { message: "Erreur interne du serveur" },
+      { message: "Erreur lors de la création du compte" },
       { status: 500 }
-    )
+    );
   }
 }

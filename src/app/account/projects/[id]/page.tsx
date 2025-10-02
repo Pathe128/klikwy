@@ -1,27 +1,30 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Calendar, Clock, Edit, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 // Types
+type ProjectStatus = 'DRAFT' | 'PUBLISHED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
 type Project = {
   id: string;
   title: string;
   description: string;
-  status: 'draft' | 'in_progress' | 'completed' | 'cancelled';
+  status: ProjectStatus;
+  deadline?: string | null;
+  budget: number;
   category?: string;
   type?: string;
-  visibility: 'public' | 'private';
-  budget?: string | number;
-  deadline?: string;
+  visibility?: 'public' | 'private';
   requirements?: string;
   tags?: string[];
   createdAt: string;
-  updatedAt?: string;
-  client?: {
+  updatedAt: string;
+  clientId: string;
+  client: {
     id: string;
     name: string;
     email?: string;
@@ -112,47 +115,58 @@ const Button = ({
   );
 };
 
-// Fonction pour simuler la récupération d'un projet
-const getProject = (projectId: string): Project | null => {
-  // En production, vous devriez faire un appel API ici
-  // Exemple :
-  // const res = await fetch(`/api/projects/${projectId}`);
-  // return await res.json();
-  
-  // Simulation de données pour le développement
-  const mockProjects: Project[] = [
-    {
-      id: 'proj-1759184313114',
-      title: 'Site e-commerce',
-      description: 'Création d\'un site e-commerce complet avec système de paiement intégré.',
-      status: 'in_progress',
-      category: 'Développement Web',
-      type: 'Site e-commerce',
-      visibility: 'public',
-      budget: 5000,
-      deadline: '2024-12-31',
-      requirements: 'Le site doit être responsive et prendre en charge les paiements en ligne.',
-      tags: ['ecommerce', 'react', 'nodejs'],
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-15T00:00:00.000Z',
-      client: {
-        id: 'client-123',
-        name: 'Boutique Mode',
-        email: 'contact@boutiquemode.com'
-      }
-    },
-    // Ajoutez d'autres projets de test si nécessaire
-  ];
-
-  return mockProjects.find(project => project.id === projectId) || null;
+// Fonction pour récupérer un projet depuis l'API
+const fetchProject = async (projectId: string): Promise<Project | null> => {
+  try {
+    const response = await fetch(`/api/projects/${projectId}`, {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error('Erreur API:', await response.text());
+      return null;
+    }
+    
+    const data = await response.json();
+    console.log('Données du projet reçues:', data);
+    return data;
+  } catch (error) {
+    console.error('Erreur fetchProject:', error);
+    return null;
+  }
 };
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [project, setProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Récupération du projet (simulé pour l'exemple)
-  const project = getProject(params.id);
+  // Récupération du projet
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        setIsLoading(true);
+        const projectData = await fetchProject(params.id);
+        setProject(projectData);
+        setError(null);
+      } catch (err) {
+        console.error('Erreur:', err);
+        setError('Impossible de charger le projet. Veuillez réessayer.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (status === 'authenticated') {
+      loadProject();
+    }
+  }, [params.id, status]);
 
   // Redirection si non connecté
   useEffect(() => {
@@ -162,10 +176,28 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
   }, [status, router]);
 
   // Affichage pendant le chargement
-  if (status === 'loading') {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Gestion des erreurs
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-6 max-w-md">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Erreur</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }
@@ -266,9 +298,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                   </p>
 
                   {project.requirements && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Exigences</h3>
-                      <p className="text-gray-700 whitespace-pre-line">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-gray-900">Exigences</h3>
+                      <p className="text-sm text-gray-600">
                         {project.requirements}
                       </p>
                     </div>
@@ -325,23 +357,25 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 {project.category && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Catégorie</h3>
-                    <p className="mt-1">{project.category}</p>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-900">Catégorie</h3>
+                    <p className="text-sm text-gray-600">{project.category}</p>
                   </div>
                 )}
 
                 {project.type && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Type de projet</h3>
-                    <p className="mt-1">{project.type}</p>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-900">Type</h3>
+                    <p className="text-sm text-gray-600">{project.type}</p>
                   </div>
                 )}
 
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Visibilité</h3>
-                  <p className="mt-1 capitalize">{project.visibility}</p>
-                </div>
+                {project.visibility && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-900">Visibilité</h3>
+                    <p className="text-sm text-gray-600 capitalize">{project.visibility}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -369,20 +403,16 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
 
             {/* Tags */}
             {project.tags && project.tags.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <h2 className="text-lg font-medium">Tags</h2>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
-                      <Badge key={tag} variant="default">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-900">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {project.tags.map((tag: string) => (
+                    <Badge key={tag} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>

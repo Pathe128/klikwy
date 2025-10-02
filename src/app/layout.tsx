@@ -4,6 +4,9 @@ import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Providers from "@/app/providers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./lib/authOptions";
+import { headers } from 'next/headers';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,23 +20,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "klikwy",
-  description: "my klikwy app",
+  description: "my klikwy app",  
+  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+  
   return (
-    <html lang="en">
-<body className="antialiased pb-16" data-atm-ext-installed="1.29.12" cz-shortcut-listen="true"
->
-<Providers>
-          <Header />
-          <main className="pb-16">
-            {children}
-          </main>
+    <html lang="fr" className="h-full bg-gray-50">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+        <Providers session={session}>
+          <div className="flex-1">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
           <Footer />
         </Providers>
       </body>

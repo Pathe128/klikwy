@@ -19,6 +19,7 @@ declare module "next-auth" {
     image?: string | null
     role?: string
     accessToken?: string
+    hashedPassword?: string | null  // ✅ AJOUTEZ CETTE LIGNE
   }
 }
 
